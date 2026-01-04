@@ -23,33 +23,25 @@ class EventEmitter {
     }
     
     subscribe(eventName: string, callback: Callback): Subscription {
+        let result = [];
         if(this.eventCallBackMap.has(eventName)) {
-            let result = [...this.eventCallBackMap.get(eventName), callback]
-            this.eventCallBackMap.set(eventName, result);
+            result = [...this.eventCallBackMap.get(eventName)];
         }
-        else this.eventCallBackMap.set(eventName, [callback]);
-        let index = this.eventCallBackMap.get(eventName).length - 1;
+        result.push(callback);
+        this.eventCallBackMap.set(eventName, result);
         return {
             unsubscribe: () => {
                 let callbacks = this.eventCallBackMap.get(eventName);
-                delete callbacks[index];
-                /*
-                    Shoud use delete because this just deletes value and sets holes
-                    well user tries to delete callback, we the index of our callback might change if we use slice/splice 
-                */
-                this.eventCallBackMap.set(eventName, callbacks);
+                this.eventCallBackMap.set(eventName, callbacks.filter((cb) => cb !== callback));
             }
         };
     }
     
     emit(eventName: string, args: any[] = []): any[] {
-        let result = [];
         if(this.eventCallBackMap.has(eventName)) {
-            this.eventCallBackMap.get(eventName).forEach((callback) => {
-                result.push(callback(...args));
-            });
+            return this.eventCallBackMap.get(eventName).map((cb) => cb(...args));
         }
-        return result;
+        return [];
     }
 }
 
